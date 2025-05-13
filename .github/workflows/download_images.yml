@@ -1,0 +1,34 @@
+name: Descargar y Guardar Imagen Docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      imagen:
+        description: 'Nombre de la imagen Docker (ejemplo: nginx:latest)'
+        required: true
+        default: 'nginx:latest'
+
+jobs:
+  descargar_y_guardar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mostrar el nombre de la imagen
+        run: echo "Imagen a descargar:${{github.event.inputs.imagen}}"
+
+      - name: Descargar la imagen de Docker
+        run: |
+          docker pull ${{ github.event.inputs.imagen }}
+
+      - name: Guardar la imagen en un archivo .tar
+        run: |
+          docker save -o imagen_guardada.tar ${{ github.event.inputs.imagen }}
+
+      - name: Resultado
+        run: |
+          ls -l imagen_guardada.tar
+          
+      - name: Upload de la imagen como artefacto
+        uses: actions/upload-artifact@v3
+        with:
+          name: imagen-docker
+          path: imagen_guardada.tar
