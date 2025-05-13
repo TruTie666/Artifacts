@@ -1,28 +1,28 @@
-name: Descargar Imagen Docker
+name: Descargar Oracle Free Docker
 
 on:
   push:
     branches:
-      - main  # El flujo se ejecuta cada vez que hagas push en la rama main
+      - main  # o la rama que uses
 
 jobs:
-  descarga:
-    runs-on: ubuntu-latest  # Usa un runner con Ubuntu
+  oracle:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout del código
-        uses: actions/checkout@v3  # Solo para asegurarse de tener el repositorio en el runner
-
-      - name: Descargar la imagen Docker
+        uses: actions/checkout@v3
+      
+      - name: Descargar la imagen de Oracle Free
         run: |
-          docker pull nginx:latest   # Aquí cambia 'nginx:latest' por la imagen que quieras
+          docker pull gvenzl/oracle-free:latest
 
-      - name: Guardar imagen como archivo
+      - name: Guardar la imagen en un archivo
         run: |
-          docker save nginx:latest -o nginx_latest.tar
+          docker save gvenzl/oracle-free:latest -o oracle-free-latest.tar
 
-      - name: Subir artefacto (opcional)
+      - name: Subir el archivo como artefacto (opcional)
         uses: actions/upload-artifact@v3
         with:
-          name: imagen-docker
-          path: nginx_latest.tar
+          name: oracle-free-image
+          path: oracle-free-latest.tar
