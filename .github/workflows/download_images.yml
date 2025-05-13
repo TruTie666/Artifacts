@@ -1,61 +1,28 @@
-name: Save Docker Image
+name: Descargar Imagen Docker
 
 on:
-  workflow_dispatch:
-    inputs:
-      image_name:
-        description: 'Parte del nombre de la imagen Docker (por ejemplo, "oracle")'
-        required: true
-        default: 'ubuntu'
+  push:
+    branches:
+      - main  # El flujo se ejecuta cada vez que hagas push en la rama main
 
 jobs:
-  save-docker-image:
-    runs-on: ubuntu-latest
+  descarga:
+    runs-on: ubuntu-latest  # Usa un runner con Ubuntu
 
     steps:
-      - name: Buscar imágenes Docker que coincidan
-        id: search_images
+      - name: Checkout del código
+        uses: actions/checkout@v3  # Solo para asegurarse de tener el repositorio en el runner
+
+      - name: Descargar la imagen Docker
         run: |
-          # Buscar imágenes en Docker Hub que contengan el texto ingresado
-          SEARCH_TERM="${{ github.event.inputs.image_name }}"
-          echo "Buscando imagenes que contienen: $SEARCH_TERM"
-          # Se obtiene la primera que contiene el término
-          IMAGE_NAME=$(curl -s "https://hub.docker.com/v2/repositories/library/?page_size=100" | \
-            jq -r --arg term "$SEARCH_TERM" '
-              .results[] | select(.name | test($term; "i")) | .name' | head -n 1)
-          if [ -z "$IMAGE_NAME" ]; then
-            echo "No se encontró ninguna imagen que coincida con '$SEARCH_TERM'"
-            exit 1
-          fi
-          echo "Imagen encontrada: $IMAGE_NAME"
-          echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+          docker pull nginx:latest   # Aquí cambia 'nginx:latest' por la imagen que quieras
 
-      - name: Mostrar imagen que se usará
-        run: echo "Descargando la imagen: ${{ steps.search_images.outputs.image_name }}"
-
-      - name: Descargar imagen Docker
+      - name: Guardar imagen como archivo
         run: |
-          # Usar la imagen encontrada, agregando el namespace si no tiene
-          IMAGE_TO_PULL="${{ steps.search_images.outputs.image_name }}"
-          
-          # Si en la búsqueda no se incluyó el namespace (como 'oracle' en lugar de 'oracle/docker-image'), se asume que está en 'library'
-          if [[ "$IMAGE_TO_PULL" != *"/"* ]]; then
-            IMAGE_TO_PULL="library/$IMAGE_TO_PULL"
-          fi
+          docker save nginx:latest -o nginx_latest.tar
 
-          docker pull "$IMAGE_TO_PULL"
-          echo "Imagen descargada: $IMAGE_TO_PULL"
-
-      - name: Guardar imagen Docker en archivo
-        run: |
-          IMAGE_TO_SAVE="${{ steps.search_images.outputs.image_name }}"
-          if [[ "$IMAGE_TO_SAVE" != *"/"* ]]; then
-            IMAGE_TO_SAVE="library/$IMAGE_TO_SAVE"
-          fi
-          docker save "$IMAGE_TO_SAVE" | gzip > image.tar.gz
-
-      - name: Subir imagen como artifact
-        uses: actions/upload-artifact@v4
+      - name: Subir artefacto (opcional)
+        uses: actions/upload-artifact@v3
         with:
-          name: docker-image
-          path: image.tar.gz
+          name: imagen-docker
+          path: nginx_latest.tar
